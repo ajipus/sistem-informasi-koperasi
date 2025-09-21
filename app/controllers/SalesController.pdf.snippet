@@ -1,0 +1,17 @@
+<?php
+// app/controllers/SalesController.pdf.snippet (tambahkan method ini ke kelas SalesController)
+public function pdf() {
+  $this->requireLevel(['admin','manager','kasir']);
+  $id = (int)($_GET['id'] ?? 0);
+  $mdl = new Sales($this->pdo);
+  $header = $mdl->find($id);
+  if (!$header) { http_response_code(404); echo "Not found"; exit; }
+  $details = $mdl->details($id);
+  $company = $this->pdo->query("SELECT * FROM company_identity LIMIT 1")->fetch();
+  // render HTML dari view existing, lalu convert ke PDF
+  ob_start();
+  include __DIR__.'/../views/sales/print.php';
+  $html = ob_get_clean();
+  require_once __DIR__.'/../libs/pdf.php';
+  render_pdf($html, 'invoice-'.$id.'.pdf', 'A4', 'portrait');
+}
